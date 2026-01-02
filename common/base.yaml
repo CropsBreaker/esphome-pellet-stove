@@ -1,0 +1,16 @@
+api:
+  password: !secret api_password
+
+ota: !include ota.yaml
+
+wifi: !include wifi.yaml
+
+logger:
+  level: DEBUG
+  logs:
+    sensor: DEBUG
+    dallas.temp: WARN
+    max6675: WARN
+    PID_CTRL: DEBUG
+    STATE_MGR: WARN
+    SAFETY: ERROR

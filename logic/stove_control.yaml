@@ -1,0 +1,185 @@
+globals:
+  # PID Params
+  - id: K_p
+    type: float
+    initial_value: '0.2'
+  - id: K_i
+    type: float
+    initial_value: '0.005'
+  - id: K_d
+    type: float
+    initial_value: '0.0'
+
+  # Timing & Thresholds
+  - id: status_message
+    type: std::string
+    initial_value: '"SPENTO"'
+  - id: cycleTime
+    type: uint32_t
+    initial_value: '5000'
+  - id: launch_time_cycle
+    type: uint32_t
+    initial_value: '600000' # 10 mins
+  - id: smoke_start_threshold
+    type: float
+    initial_value: '70'
+  - id: smoke_min_run
+    type: float
+    initial_value: '50'
+  - id: smoke_max_safety
+    type: float
+    initial_value: '350.0'
+
+  # Runtime Variables
+  - id: T_target
+    type: float
+    initial_value: '60.0'
+    restore_value: true
+  - id: integral
+    type: float
+    initial_value: '0.0'
+  - id: prev_error
+    type: float
+    initial_value: '0.0'
+  - id: launch_status
+    type: bool
+    initial_value: 'false'
+  - id: starting_time
+    type: uint32_t
+    initial_value: '0'
+  - id: lastTime
+    type: uint32_t
+    initial_value: '0'
+
+text_sensor:
+  - platform: template
+    name: "Stato Visivo stove"
+    id: stove_status_text
+    icon: "mdi:fireplace-off"
+    update_interval: 1s
+    lambda: return id(status_message);
+
+button:
+  - platform: template
+    name: "Reset Allarmi"
+    id: btn_reset_error
+    icon: "mdi:alert-remove-outline"
+    on_press:
+      - lambda: |-
+          if (!id(stove_pwr_status).state) {
+            id(led_error).turn_off();
+            id(led_warning).turn_off();
+            id(led_ok).turn_off();
+            id(status_message) = "SPENTO";
+            ESP_LOGI("MANUAL_RESET", "Ack Errore Utente.");
+          } else {
+            ESP_LOGW("MANUAL_RESET", "Reset rifiutato: Sistema attivo.");
+          }
+
+switch:
+  - platform: template
+    name: "Abilitazione Web"
+    id: web_enable
+    optimistic: true
+    on_turn_on:
+      - script.execute: sync_stove_state
+    on_turn_off:
+      - script.execute: sync_stove_state
+
+  # MASTER LOGIC SWITCH
+  - platform: template
+    name: "Stato Effettivo stove"
+    id: stove_pwr_status
+    optimistic: true
+    on_turn_on:
+      - logger.log:
+          tag: "STATE_MGR"
+          level: WARN
+          format: ">>> SYSTEM START: Init Sequence <<<"
+      - lambda: |-
+          id(starting_time) = millis();
+          id(launch_status) = false;
+          id(integral) = 0.0;
+          id(prev_error) = 0.0;
+          id(lastTime) = millis();
+      - script.execute: boot_sequence
+    on_turn_off:
+      - logger.log:
+          tag: "STATE_MGR"
+          level: WARN
+          format: ">>> SYSTEM STOP: Shutdown req <<<"
+      - script.stop: boot_sequence
+      - script.execute: stop_all
+
+# --- MAIN LOOP ---
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          run_stove_control_loop();
+
+script:
+  - id: stop_all
+    mode: restart
+    then:
+      - switch.turn_off: stove_pwr_status
+      - script.stop: coclea_pulse
+      - switch.turn_off: coclea
+      - lambda: |-
+          if (id(led_error).state) {
+            ESP_LOGW("STOP", "Emergency Stop. Error Flag maintained.");
+            id(led_ok).turn_off();
+            id(led_warning).turn_off();
+          } else {
+            ESP_LOGI("STOP", "Manual Stop.");
+            id(led_ok).turn_off();
+            id(led_warning).turn_off();
+            id(led_error).turn_off();
+            id(status_message) = "SPENTO";
+          }
+
+  - id: boot_sequence
+    mode: single
+    then:
+      - switch.turn_on: led_warning
+      - globals.set:
+          id: status_message
+          value: '"AVVIO: Carico Pellet"'
+      - logger.log: "Phase 1: Pre-Load Pellet"
+      - switch.turn_on: coclea 
+      - delay: 90s
+      - switch.turn_off: coclea
+      - globals.set:
+          id: status_message
+          value: '"AVVIO: Attesa Fiamma"'
+      - logger.log: "Phase 2: Waiting for T_smoke rise..."
+
+  - id: critical_exit
+    mode: single
+    then:
+      - logger.log:
+          tag: "SAFETY"
+          level: ERROR
+          format: "!!! CRITICAL EXIT TRIGGERED !!!"
+      - script.execute: stop_all
+      - switch.turn_on: led_error
+
+  - id: coclea_pulse
+    mode: restart
+    parameters:
+      duration_ms: int
+    then:
+      - switch.turn_on: coclea
+      - delay: !lambda 'return duration_ms;'
+      - switch.turn_off: coclea
+
+  - id: sync_stove_state
+    mode: restart
+    then:
+      - lambda: |-
+          bool condition = id(physical_sw).state || id(web_enable).state;
+          if (condition) {
+            if (!id(stove_pwr_status).state) id(stove_pwr_status).turn_on();
+          } else {
+            if (id(stove_pwr_status).state) id(stove_pwr_status).turn_off();
+          }
