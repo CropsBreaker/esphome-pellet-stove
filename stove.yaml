@@ -1,0 +1,14 @@
+esphome:
+  name: stove
+  includes:
+    - stove_logic.h
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+packages:
+  system: !include common/base.yaml
+  hardware: !include hardware/stove_hal.yaml
+  logic: !include logic/stove_control.yaml

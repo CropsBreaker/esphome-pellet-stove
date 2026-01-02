@@ -1,0 +1,68 @@
+spi:
+  clk_pin: 18
+  miso_pin: 19
+
+one_wire:
+  - platform: gpio
+    pin: 4
+
+sensor:
+  - platform: max6675
+    name: "Temperatura Fumi"
+    id: temp_smoke
+    cs_pin: 21
+    update_interval: 2s
+    filters:
+      - median: { window_size: 5, send_every: 1 }
+      - sliding_window_moving_average: { window_size: 3, send_every: 1 }
+
+  - platform: dallas_temp
+    id: temp_water
+    address: 0x9f0192d446c62528
+    name: "Temperatura Caldaia"
+    update_interval: 2s
+    filters:
+      - sliding_window_moving_average: { window_size: 3, send_every: 1 }
+
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: 16
+      mode: INPUT_PULLDOWN
+    name: "Interruttore Fisico"
+    id: physical_sw
+    filters:
+      - delayed_on_off: 100ms
+    on_state:
+      - script.execute: sync_stove_state
+
+switch:
+  - platform: gpio
+    pin: 33
+    id: relay_aux
+    name: "PLC command"
+
+  - platform: gpio
+    pin: 26
+    id: coclea
+    name: "Coclea Motore"
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 14
+    id: led_error
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 13
+    id: led_warning
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 27
+    id: led_ok
+    internal: true
+    restore_mode: ALWAYS_OFF
