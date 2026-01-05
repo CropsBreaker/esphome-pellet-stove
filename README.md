@@ -1,4 +1,4 @@
-# Project Specification: ESP32 Pellet Stove Controller
+# ESP32 Pellet Stove Controller
 
 ## Project Overview
 This project implements a hybrid control system for a pellet stove using an ESP32. The system leverages a **PID Controller** to manage water temperature by modulating the pellet feed through a **Smart Bucket** algorithm.
