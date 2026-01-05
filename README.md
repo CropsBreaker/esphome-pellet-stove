@@ -13,7 +13,8 @@ This project implements a hybrid control system for a pellet stove using an ESP3
 
 ## Hardware Components & Rationale
 
-* **MCU: ESP32-WROOM (4MB Flash):** * *Rationale:* The code is heavy (approx. 900 KB). 4MB is required to support **OTA (Over-The-Air)** updates comfortably by allowing enough space for the twin-partition switch.
+* **MCU: ESP32-WROOM (4MB Flash):** *
+    * *Rationale:* The code is heavy (approx. 900 KB). 4MB is required to support **OTA (Over-The-Air)** updates comfortably by allowing enough space for the twin-partition switch.
 * **Exhaust Sensor: K-type Thermocouple + MAX6675:**
     * *Rationale:* Ranges well for high temperatures and is very cheap compared to industrial probes.
 * **Auger Actuator: Solid State Relay (SSR-40DA):**
