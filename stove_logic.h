@@ -48,6 +48,13 @@ inline void run_stove_control_loop() {
     if (!id(boot_sequence).is_running()) {
       id(status_message) = "AVVIO: Attesa Fiamma";
     }
+
+
+    // Case D. Fire detected but is small
+    if(!id(boot_sequence).is_running() && T_smoke >= 45.0f) {
+      ESP_LOGW("STATE_MGR", ">>> SMALL FIRE DETECTED. Continuing BOOT SEQUENCE. <<<");
+      id(coclea_pulse).execute((int)(8 * 1000));
+    }
     return;
   }
 
