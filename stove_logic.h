@@ -13,7 +13,7 @@ inline void run_stove_control_loop() {
 
   // 1. SANITY CHECK (Sensor Health) ---
   if (std::isnan(T_smoke) || T_smoke < 0) {
-    id(status_message) = "ERRORE: Sonda Fumi Guasta";
+    id(status_message) = "ERROR_SMOKE_SENSOR_FAIL";
     ESP_LOGE("SAFETY", "CRITICAL: Sonda Fumi Fail!");
     id(critical_exit).execute();
     return;
@@ -31,14 +31,14 @@ inline void run_stove_control_loop() {
       id(prev_error) = id(T_target) - T_water; 
       id(integral) = 0.0; 
       
-      id(status_message) = "RUN: OK";
+      id(status_message) = "RUN_OK";
       ESP_LOGW("STATE_MGR", ">>> FIRE DETECTED. Entering RUN Mode. <<<");
       return;
     }
 
     // Case B. Timeout
     if ((now - id(starting_time)) >= id(launch_time_cycle)) {
-      id(status_message) = "ERRORE: Mancata Accensione";
+      id(status_message) = "ERROR_STARTUP_TIMEOUT";
       ESP_LOGE("STATE_MGR", "BOOT FAILED: Timeout.");
       id(critical_exit).execute();
       return;
@@ -46,7 +46,7 @@ inline void run_stove_control_loop() {
 
     // Case C. Waiting (UI Update)
     if (!id(boot_sequence).is_running()) {
-      id(status_message) = "AVVIO: Attesa Fiamma";
+      id(status_message) = "START_WATING_FIRE";
     }
 
 
@@ -62,7 +62,7 @@ inline void run_stove_control_loop() {
 
   // Safety: Loss of Flame
   if (T_smoke < id(smoke_min_run)) {
-    id(status_message) = "ERRORE: Fiamma Persa";
+    id(status_message) = "ERROR_FLAME_LOSS";
     ESP_LOGE("SAFETY", "FLAME LOSS detected.");
     id(critical_exit).execute();
     return;
@@ -70,7 +70,7 @@ inline void run_stove_control_loop() {
 
   // Safety: Smoke Overheat
   if (T_smoke > id(smoke_max_safety)) {
-    id(status_message) = "ERRORE: Surriscaldamento Fumi";
+    id(status_message) = "ERROR_SMOKE_OVERHEAT";
     ESP_LOGE("SAFETY", "OVERHEAT SMOKE.");
     id(critical_exit).execute();
     return;
@@ -78,13 +78,13 @@ inline void run_stove_control_loop() {
 
   // Safety: Water Overheat
   if (!std::isnan(T_water) && T_water > 85.0) {
-    id(status_message) = "ERRORE: Temp Acqua Alta";
+    id(status_message) = "ERROR_WATER_OVERHEAT";
     ESP_LOGE("SAFETY", "OVERHEAT WATER.");
     id(critical_exit).execute();
     return;
   }
 
-  id(status_message) = "RUN: OK";
+  id(status_message) = "RUN_OK";
 
   // --- 4. PID LOOP & ACTUATOR CONTROL ---
   

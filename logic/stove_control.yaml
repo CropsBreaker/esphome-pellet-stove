@@ -70,7 +70,7 @@ button:
             id(led_error).turn_off();
             id(led_warning).turn_off();
             id(led_ok).turn_off();
-            id(status_message) = "SPENTO";
+            id(status_message) = "OFF";
             ESP_LOGI("MANUAL_RESET", "Ack Errore Utente.");
           } else {
             ESP_LOGW("MANUAL_RESET", "Reset rifiutato: Sistema attivo.");
@@ -135,7 +135,7 @@ script:
             id(led_ok).turn_off();
             id(led_warning).turn_off();
             id(led_error).turn_off();
-            id(status_message) = "SPENTO";
+            id(status_message) = "OFF";
           }
 
   - id: boot_sequence
@@ -144,14 +144,14 @@ script:
       - switch.turn_on: led_warning
       - globals.set:
           id: status_message
-          value: '"AVVIO: Carico Pellet"'
+          value: '"START_LOAD_PELLET"'
       - logger.log: "Phase 1: Pre-Load Pellet"
       - switch.turn_on: coclea 
       - delay: 90s
       - switch.turn_off: coclea
       - globals.set:
           id: status_message
-          value: '"AVVIO: Attesa Fiamma"'
+          value: '"START_WAITING_FIRE"'
       - logger.log: "Phase 2: Waiting for T_smoke rise..."
 
   - id: critical_exit
