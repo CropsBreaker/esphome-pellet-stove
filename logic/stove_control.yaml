@@ -13,7 +13,7 @@ globals:
   # Timing & Thresholds
   - id: status_message
     type: std::string
-    initial_value: '"SPENTO"'
+    initial_value: '"OFF"'
   - id: cycleTime
     type: uint32_t
     initial_value: '5000'
