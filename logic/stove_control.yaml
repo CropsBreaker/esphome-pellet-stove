@@ -53,7 +53,7 @@ globals:
 
 text_sensor:
   - platform: template
-    name: "Stato Visivo stove"
+    name: "STOVE_STATUS"
     id: stove_status_text
     icon: "mdi:fireplace-off"
     update_interval: 1s
@@ -61,7 +61,7 @@ text_sensor:
 
 button:
   - platform: template
-    name: "Reset Allarmi"
+    name: "RESET_ERROR_BUTTON"
     id: btn_reset_error
     icon: "mdi:alert-remove-outline"
     on_press:
@@ -78,7 +78,7 @@ button:
 
 switch:
   - platform: template
-    name: "Abilitazione Web"
+    name: "WEB_CONTROL_ENABLE"
     id: web_enable
     optimistic: true
     on_turn_on:
@@ -88,7 +88,7 @@ switch:
 
   # MASTER LOGIC SWITCH
   - platform: template
-    name: "Stato Effettivo stove"
+    name: "STOVE_PWR_STATUS"
     id: stove_pwr_status
     optimistic: true
     on_turn_on:

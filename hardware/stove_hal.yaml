@@ -8,7 +8,7 @@ one_wire:
 
 sensor:
   - platform: max6675
-    name: "Temperatura Fumi"
+    name: "SMOKE_TEMP"
     id: temp_smoke
     cs_pin: 21
     update_interval: 2s
@@ -19,7 +19,7 @@ sensor:
   - platform: dallas_temp
     id: temp_water
     address: 0x9f0192d446c62528
-    name: "Temperatura Caldaia"
+    name: "WATER_TEMP"
     update_interval: 2s
     filters:
       - sliding_window_moving_average: { window_size: 3, send_every: 1 }
@@ -29,7 +29,7 @@ binary_sensor:
     pin:
       number: 16
       mode: INPUT_PULLDOWN
-    name: "Interruttore Fisico"
+    name: "PHYSICAL_SWITCH"
     id: physical_sw
     filters:
       - delayed_on_off: 100ms
@@ -40,12 +40,12 @@ switch:
   - platform: gpio
     pin: 33
     id: relay_aux
-    name: "PLC command"
+    name: "PLC_COMMAND"
 
   - platform: gpio
     pin: 26
     id: coclea
-    name: "Coclea Motore"
+    name: "COCLEA_MOTOR"
     internal: true
     restore_mode: ALWAYS_OFF
 
