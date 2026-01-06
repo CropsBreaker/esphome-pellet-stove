@@ -118,7 +118,12 @@ inline void run_stove_control_loop() {
   
   // B. "Smart Bucket" Logic
   static float pellet_bucket = 0.0f;
+
+  // Anti-starvation system
+  const float MIN_KEEP_ALIVE = 0.125f; // 2/16s minimum to keep fire alive
   
+  pid_power = fmaxf(fminf(pid_power, 1.2f), MIN_KEEP_ALIVE);
+
   if (pid_power > 0) {
       pellet_bucket += pid_power * dt; 
   }
@@ -127,14 +132,20 @@ inline void run_stove_control_loop() {
   pellet_bucket = fminf(pellet_bucket, 10.0f);
   
   // C. Actuation
-  const float MIN_MOTOR_ON = 0.8f; // Minimum relay activation time
+  const float MIN_MOTOR_ON = 2.0f; // Minimum relay activation time
+  const float MIN_REST_TIME = 1.5f; // Minimum time to let the fire burn before re-adding pellets(avoid pellet hills)
+
   float t_on = 0.0f;
 
   if (pellet_bucket >= MIN_MOTOR_ON) {
-      float max_run_this_cycle = dt - 0.2f; // Leave some margin in the cycle
+      float max_run_this_cycle = dt - MIN_REST_TIME;
       t_on = fminf(pellet_bucket, max_run_this_cycle);
       pellet_bucket -= t_on;
+  } else if(T_smoke < 130.0f){
+    t_on = fminf(t_on, dt * 0.5f); // Avoid a complete shutdown. 100 is too low
   }
+
+  
 
   // Debug Telemetry
   ESP_LOGD("PID_CTRL", "Err:%.1f | P:%.2f I:%.2f D:%.2f | Out:%.2f | Buck:%.2fs | ACT:%.2fs", 
