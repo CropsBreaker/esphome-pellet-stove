@@ -188,3 +188,9 @@ script:
           } else {
             if (id(stove_pwr_status).state) id(stove_pwr_status).turn_off();
           }
+
+          if(id(web_enable).state) {
+            id(relay_aux).turn_on();
+          }else{
+            id(relay_aux).turn_off();
+          }

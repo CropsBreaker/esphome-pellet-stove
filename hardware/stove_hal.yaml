@@ -41,6 +41,8 @@ switch:
     pin: 33
     id: relay_aux
     name: "PLC_COMMAND"
+    internal: true
+    restore_mode: ALWAYS_OFF
 
   - platform: gpio
     pin: 26
