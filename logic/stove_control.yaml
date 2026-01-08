@@ -86,6 +86,11 @@ switch:
     on_turn_off:
       - script.execute: sync_stove_state
 
+  - platform: template
+    name: "ANTI_CLOGGING_MODE"
+    id: anticlogging_mode
+    optimistic: true
+
   # MASTER LOGIC SWITCH
   - platform: template
     name: "STOVE_PWR_STATUS"
