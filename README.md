@@ -31,8 +31,10 @@ This project implements a hybrid control system for a pellet stove using an ESP3
 | **MAX6675 MISO** | GPIO 19 | SPI | Data from Thermocouple |
 | **MAX6675 CS** | GPIO 21 | SPI | Chip Select for Smoke Sensor |
 | **Ds18B20 Data** | GPIO 4 | 1-Wire | Water Temperature Sensor Bus |
-| **Auger (Coclea)** | GPIO 26 | Output (SSR) | Pulse control for pellet feed |
-| **PLC Command** | GPIO 33 | Output (Relay) | Web-triggered start for PLC |
+| **Auger (Coclea) relay** | GPIO 26 | Output (SSR) | Pulse control for pellet feed |
+| **Vent relay** | GPIO 33 | Output (Relay) | Relay to control the smoke vent |
+| **Spark plug relay** | GPIO 32 | Output (Relay) | Relay to control the spark plug |
+| **Backup heating relay** | GPIO 32 | Output (Relay) | Relay to control a clean contact used to enable the backup relay |
 | **Physical Sw** | GPIO 16 | Input (PD) | Input status from external PLC |
 | **LED OK** | GPIO 27 | Output | RUN mode active |
 | **LED Warning** | GPIO 13 | Output | Boot/Startup sequence |
