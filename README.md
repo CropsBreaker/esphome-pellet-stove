@@ -34,7 +34,7 @@ This project implements a hybrid control system for a pellet stove using an ESP3
 | **Auger (Coclea) relay** | GPIO 26 | Output (SSR) | Pulse control for pellet feed |
 | **Vent relay** | GPIO 33 | Output (Relay) | Relay to control the smoke vent |
 | **Spark plug relay** | GPIO 32 | Output (Relay) | Relay to control the spark plug |
-| **Backup heating relay** | GPIO 32 | Output (Relay) | Relay to control a clean contact used to enable the backup relay |
+| **Backup heating relay** | GPIO 35 | Output (Relay) | Relay to control a clean contact used to enable the backup relay |
 | **Physical Sw** | GPIO 16 | Input (PD) | Input status from external PLC |
 | **LED OK** | GPIO 27 | Output | RUN mode active |
 | **LED Warning** | GPIO 13 | Output | Boot/Startup sequence |
