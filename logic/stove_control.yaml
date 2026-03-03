@@ -71,9 +71,9 @@ button:
             id(led_warning).turn_off();
             id(led_ok).turn_off();
             id(status_message) = "OFF";
-            ESP_LOGI("MANUAL_RESET", "Ack Errore Utente.");
+            ESP_LOGI("MANUAL_RESET", "Ack User error");
           } else {
-            ESP_LOGW("MANUAL_RESET", "Reset rifiutato: Sistema attivo.");
+            ESP_LOGW("MANUAL_RESET", "Reset refused: system is running");
           }
 
 switch:
@@ -139,8 +139,10 @@ script:
             ESP_LOGI("STOP", "Manual Stop.");
             id(led_ok).turn_off();
             id(led_warning).turn_off();
-            id(led_error).turn_off();
-            id(status_message) = "OFF";
+
+            if(!id(led_error).state) {
+              id(status_message) = "OFF";
+            }
           }
 
   - id: boot_sequence
