@@ -33,8 +33,6 @@ binary_sensor:
     id: physical_sw
     filters:
       - delayed_on_off: 100ms
-    on_state:
-      - script.execute: sync_stove_state
     on_press:
       - script.execute: sync_stove_state
     on_release:
@@ -87,7 +85,7 @@ switch:
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
-    pin: 12
+    pin: 32
     id: water_pump
     name: "WATER_PUMP"
     internal: true
@@ -106,7 +104,7 @@ switch:
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
-    pin: 27
+    pin: 12
     id: led_ok
     internal: true
     restore_mode: ALWAYS_OFF

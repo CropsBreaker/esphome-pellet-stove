@@ -136,13 +136,16 @@ script:
   - id: stop_all
     mode: restart
     then:
-      - switch.turn_off: stove_pwr_status
       - script.stop: coclea_pulse
       - switch.turn_off: coclea
       - switch.turn_off: spark_plug
       - switch.turn_off: water_pump
+      
+      - globals.set:
+          id: status_message
+          value: '"TURNING_OFF"'
       - delay: 600s
-        - switch.turn_off: smoke_fan
+      - switch.turn_off: smoke_fan
 
       - lambda: |-
           if (id(led_error).state) {
