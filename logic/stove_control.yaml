@@ -78,6 +78,12 @@ button:
 
 switch:
   - platform: template
+    name: "COCLEA_BYPASS"
+    id: coclea_bypass
+    optimistic: true
+    icon: "mdi:screw-machine-flat-top"
+
+  - platform: template
     name: "WEB_CONTROL_ENABLE"
     id: web_enable
     optimistic: true
@@ -170,7 +176,12 @@ script:
           id: status_message
           value: '"START_LOAD_PELLET"'
       - logger.log: "Phase 1: Pre-Load Pellet"
-      - switch.turn_on: coclea 
+      - if:
+          condition:
+            not:
+              switch.is_on: coclea_bypass
+          then:
+            - switch.turn_on: coclea 
       - delay: 90s
       - switch.turn_off: coclea
       - globals.set:
@@ -204,9 +215,14 @@ script:
     parameters:
       duration_ms: int
     then:
-      - switch.turn_on: coclea
-      - delay: !lambda 'return duration_ms;'
-      - switch.turn_off: coclea
+      - if:
+          condition:
+            not:
+              switch.is_on: coclea_bypass
+          then:
+            - switch.turn_on: coclea
+            - delay: !lambda 'return duration_ms;'
+            - switch.turn_off: coclea
 
   - id: sync_stove_state
     mode: restart

@@ -60,35 +60,35 @@ switch:
     pin: 25
     id: smoke_fan
     name: "SMOKE_FAN"
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
   
   - platform: gpio
     pin: 33
     id: spark_plug
     name: "SPARK_PLUG"
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
     pin: 27
     id: backup_heater
     name: "BACKUP_HEATER"
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
     pin: 26
     id: coclea
     name: "COCLEA_MOTOR"
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
     pin: 32
     id: water_pump
     name: "WATER_PUMP"
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
