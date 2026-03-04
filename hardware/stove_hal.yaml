@@ -35,12 +35,47 @@ binary_sensor:
       - delayed_on_off: 100ms
     on_state:
       - script.execute: sync_stove_state
+    on_press:
+      - script.execute: sync_stove_state
+    on_release:
+      - script.execute: sync_stove_state
+      - if:
+          condition:
+            switch.is_on: backup_heater
+          then:
+            - switch.turn_off: backup_heater
+            - binary_sensor.template.publish:
+                id: backup_status
+                state: OFF
+            - logger.log:
+                tag: "SAFETY"
+                level: INFO
+                format: "SAFETY: Backup heater deactivated by physical switch"
+
+
+  - platform: template
+    name: "BACKUP_STATUS"
+    id: backup_status
 
 switch:
   - platform: gpio
+    pin: 25
+    id: smoke_fan
+    name: "SMOKE_FAN"
+    internal: true
+    restore_mode: ALWAYS_OFF
+  
+  - platform: gpio
     pin: 33
-    id: relay_aux
-    name: "PLC_COMMAND"
+    id: spark_plug
+    name: "SPARK_PLUG"
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 27
+    id: backup_heater
+    name: "BACKUP_HEATER"
     internal: true
     restore_mode: ALWAYS_OFF
 
@@ -48,6 +83,13 @@ switch:
     pin: 26
     id: coclea
     name: "COCLEA_MOTOR"
+    internal: true
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin: 12
+    id: water_pump
+    name: "WATER_PUMP"
     internal: true
     restore_mode: ALWAYS_OFF
 

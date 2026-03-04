@@ -31,6 +31,14 @@ inline void run_stove_control_loop() {
 
     // 2. STARTUP LOGIC
     if (!id(launch_status)) {
+      
+      if(!id(smoke_fan).state)
+        id(smoke_fan).turn_on();
+      if(!id(spark_plug).state)
+        id(spark_plug).turn_on();
+      if(!id(water_pump).state)
+        id(water_pump).turn_on();
+
       // Case A. Fire detected
       if (T_smoke >= id(smoke_start_threshold)) {
         id(launch_status) = true;
@@ -48,6 +56,9 @@ inline void run_stove_control_loop() {
 
       // Case B. Timeout
       if ((now - id(starting_time)) >= id(launch_time_cycle)) {
+        id(spark_plug).turn_off();
+        id(smoke_fan).turn_off();
+
         id(status_message) = "ERROR_STARTUP_TIMEOUT";
         ESP_LOGE("STATE_MGR", "BOOT FAILED: Timeout.");
         id(critical_exit).execute();
@@ -62,6 +73,7 @@ inline void run_stove_control_loop() {
 
       // Case D. Fire detected but is small
       if(!id(boot_sequence).is_running() && T_smoke >= 45.0f) {
+        id(spark_plug).turn_off();
         ESP_LOGW("STATE_MGR", ">>> SMALL FIRE DETECTED. Continuing BOOT SEQUENCE. <<<");
         id(coclea_pulse).execute((int)(8 * 1000));
       }

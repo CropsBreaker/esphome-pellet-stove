@@ -85,6 +85,15 @@ switch:
       - script.execute: sync_stove_state
     on_turn_off:
       - script.execute: sync_stove_state
+      - if:
+          condition:
+            switch.is_on: backup_heater
+          then:
+            - switch.turn_off: backup_heater
+            - binary_sensor.template.publish:
+                id: backup_status
+                state: OFF
+            - logger.log: "SAFETY: Backup heater deactivated by web control"
 
   - platform: template
     name: "ANTI_CLOGGING_MODE"
@@ -130,6 +139,11 @@ script:
       - switch.turn_off: stove_pwr_status
       - script.stop: coclea_pulse
       - switch.turn_off: coclea
+      - switch.turn_off: spark_plug
+      - switch.turn_off: water_pump
+      - delay: 600s
+        - switch.turn_off: smoke_fan
+
       - lambda: |-
           if (id(led_error).state) {
             ESP_LOGW("STOP", "Emergency Stop. Error Flag maintained.");
@@ -170,6 +184,17 @@ script:
           format: "!!! CRITICAL EXIT TRIGGERED !!!"
       - script.execute: stop_all
       - switch.turn_on: led_error
+      
+      # Safety
+      - switch.turn_off: smoke_fan
+      - switch.turn_off: spark_plug
+      - switch.turn_off: water_pump
+      
+      # Backup
+      - switch.turn_on: backup_heater
+      - binary_sensor.template.publish:
+          id: backup_status
+          state: ON
 
   - id: coclea_pulse
     mode: restart
@@ -184,15 +209,11 @@ script:
     mode: restart
     then:
       - lambda: |-
-          bool condition = id(physical_sw).state || id(web_enable).state;
-          if (condition) {
+          // web_enable bypass phisical_sw
+          bool is_active = id(physical_sw).state || id(web_enable).state;
+          
+          if (is_active) {
             if (!id(stove_pwr_status).state) id(stove_pwr_status).turn_on();
           } else {
             if (id(stove_pwr_status).state) id(stove_pwr_status).turn_off();
-          }
-
-          if(id(web_enable).state) {
-            id(relay_aux).turn_on();
-          }else{
-            id(relay_aux).turn_off();
           }
