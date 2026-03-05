@@ -125,13 +125,13 @@ switch:
 # --- MAIN LOOPS ---
 interval:
   - interval: 1s
-    name: "PID_Control_Loop"
+    id: pid_control_loop
     then:
       - lambda: |-
           run_stove_control_loop();
 
   - interval: 2s
-    name: "Backup_Heater_Manager"
+    id: backup_heater_manager
     then:
       - lambda: |-
           bool heat_demand = id(physical_sw).state || id(web_enable).state;
