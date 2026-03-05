@@ -91,15 +91,6 @@ switch:
       - script.execute: sync_stove_state
     on_turn_off:
       - script.execute: sync_stove_state
-      - if:
-          condition:
-            switch.is_on: backup_heater
-          then:
-            - switch.turn_off: backup_heater
-            - binary_sensor.template.publish:
-                id: backup_status
-                state: OFF
-            - logger.log: "SAFETY: Backup heater deactivated by web control"
 
   - platform: template
     name: "ANTI_CLOGGING_MODE"
@@ -131,12 +122,32 @@ switch:
       - script.stop: boot_sequence
       - script.execute: stop_all
 
-# --- MAIN LOOP ---
+# --- MAIN LOOPS ---
 interval:
   - interval: 1s
+    name: "PID_Control_Loop"
     then:
       - lambda: |-
           run_stove_control_loop();
+
+  - interval: 2s
+    name: "Backup_Heater_Manager"
+    then:
+      - lambda: |-
+          bool heat_demand = id(physical_sw).state || id(web_enable).state;
+          bool stove_in_error = id(led_error).state;
+          
+          if (heat_demand && stove_in_error) {
+            if (!id(backup_heater).state) {
+              id(backup_heater).turn_on();
+              ESP_LOGI("BACKUP", "Requesting heat & error state: Backup ON");
+            }
+          } else {
+            if (id(backup_heater).state) {
+              id(backup_heater).turn_off();
+              ESP_LOGI("BACKUP", "Conditions not met: Backup OFF");
+            }
+          }
 
 script:
   - id: stop_all
@@ -203,12 +214,6 @@ script:
       - switch.turn_off: smoke_fan
       - switch.turn_off: spark_plug
       - switch.turn_off: water_pump
-      
-      # Backup
-      - switch.turn_on: backup_heater
-      - binary_sensor.template.publish:
-          id: backup_status
-          state: ON
 
   - id: coclea_pulse
     mode: restart
@@ -228,7 +233,6 @@ script:
     mode: restart
     then:
       - lambda: |-
-          // web_enable bypass phisical_sw
           bool is_active = id(physical_sw).state || id(web_enable).state;
           
           if (is_active) {
