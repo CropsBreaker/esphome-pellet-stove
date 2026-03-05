@@ -54,6 +54,8 @@ binary_sensor:
   - platform: template
     name: "BACKUP_STATUS"
     id: backup_status
+    lambda: |-
+      return id(backup_heater).state;
 
 switch:
   - platform: gpio
