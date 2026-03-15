@@ -5,11 +5,6 @@
 inline void run_stove_control_loop() {
   static float pellet_bucket = 0.0f;
 
-  // Blocco anti-watchdog se la stufa è in lock critico
-  if (id(led_error).state) {
-    return;
-  }
-
   // 1. ANTI-CLOGGING MODE
   if (id(anticlogging_mode).state) {
     static uint32_t last_pulse_start = 0;
@@ -30,7 +25,7 @@ inline void run_stove_control_loop() {
     return;
   }
 
-  if (id(led_error).state) {
+  if (id(system_fault_lock)) {
     return;
   }
 

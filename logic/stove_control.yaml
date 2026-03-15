@@ -1,4 +1,9 @@
 globals:
+
+  - id: system_fault_lock
+    type: bool
+    initial_value: 'false'
+    
   # PID Params
   - id: K_p
     type: float
@@ -61,12 +66,25 @@ text_sensor:
 
 button:
   - platform: template
+    name: "SIMULATE_IGNITION_FAIL"
+    id: btn_simulate_ignition_fail
+    icon: "mdi:fire-off"
+    on_press:
+      - lambda: |-
+          id(status_message) = "ERROR_STARTUP_TIMEOUT";
+          
+          ESP_LOGW("SIMULATION", "Critical error simulated: Ignition failure");
+          
+          id(critical_exit).execute();
+
+  - platform: template
     name: "RESET_ERROR_BUTTON"
     id: btn_reset_error
     icon: "mdi:alert-remove-outline"
     on_press:
       - lambda: |-
           if (!id(stove_pwr_status).state) {
+            id(system_fault_lock) = false;
             id(led_error).turn_off();
             id(led_warning).turn_off();
             id(led_ok).turn_off();
@@ -113,14 +131,21 @@ switch:
           id(integral) = 0.0;
           id(prev_error) = 0.0;
           id(lastTime) = millis();
-      - script.execute: boot_sequence
-    on_turn_off:
-      - logger.log:
-          tag: "STATE_MGR"
-          level: WARN
-          format: ">>> SYSTEM STOP: Shutdown req <<<"
-      - script.stop: boot_sequence
-      - script.execute: stop_all
+      - if:
+          condition:
+            and:
+              - not:
+                  switch.is_on: coclea_bypass
+              - not:
+                  switch.is_on: led_error
+          then:
+            - script.execute: boot_sequence
+          else:
+            - logger.log:
+                tag: "STATE_MGR"
+                level: ERROR
+                format: "Boot refused: Check safety conditions"
+            - switch.turn_off: stove_pwr_status
 
 # --- MAIN LOOPS ---
 interval:
@@ -136,8 +161,10 @@ interval:
       - lambda: |-
           bool heat_demand = id(physical_sw).state || id(web_enable).state;
           bool stove_in_error = id(led_error).state;
+          bool pump_active = id(water_pump).state;
+          bool smoke_fan_active = id(smoke_fan).state;
           
-          if (heat_demand && stove_in_error) {
+          if (heat_demand && stove_in_error && !pump_active && !smoke_fan_active) {
             if (!id(backup_heater).state) {
               id(backup_heater).turn_on();
               ESP_LOGI("BACKUP", "Requesting heat & error state: Backup ON");
@@ -145,7 +172,7 @@ interval:
           } else {
             if (id(backup_heater).state) {
               id(backup_heater).turn_off();
-              ESP_LOGI("BACKUP", "Conditions not met: Backup OFF");
+              ESP_LOGI("BACKUP", "Conditions not met or pump running: Backup OFF");
             }
           }
 
@@ -155,29 +182,32 @@ script:
     then:
       - script.stop: coclea_pulse
       - switch.turn_off: coclea
-      - delay: 100ms
+      - delay: 1000ms
+      
       - switch.turn_off: spark_plug
-      - delay: 100ms
+      - delay: 1000ms
+      
       - switch.turn_off: water_pump
       
       - lambda: |-
-          if (!id(led_error).state) {
+          if (!id(system_fault_lock)) {
             id(status_message) = "TURNING_OFF";
           }
+          
       - delay: 600s
       - switch.turn_off: smoke_fan
-
+      
       - lambda: |-
-          if (id(led_error).state) {
+          if (id(system_fault_lock)) {
             ESP_LOGW("STOP", "Emergency Stop. Error Flag maintained.");
             id(led_ok).turn_off();
             id(led_warning).turn_off();
           } else {
-            ESP_LOGI("STOP", "Manual Stop.");
+            ESP_LOGI("STOP", "Manual Stop completed.");
             id(led_ok).turn_off();
             id(led_warning).turn_off();
-
-            if(!id(led_error).state) {
+            
+            if (!id(system_fault_lock)) {
               id(status_message) = "OFF";
             }
           }
@@ -195,7 +225,7 @@ script:
             not:
               switch.is_on: coclea_bypass
           then:
-            - switch.turn_on: coclea 
+            - switch.turn_on: coclea
       - delay: 90s
       - switch.turn_off: coclea
       - globals.set:
@@ -210,17 +240,27 @@ script:
           tag: "SAFETY"
           level: ERROR
           format: "!!! CRITICAL EXIT TRIGGERED !!!"
+      - globals.set:
+          id: system_fault_lock
+          value: 'true'
+          
+      - switch.turn_off: backup_heater
+      - delay: 100ms
+          
+      - script.stop: coclea_pulse
+      - delay: 500ms
+      - switch.turn_off: coclea
+      - delay: 1000ms
+      - switch.turn_off: spark_plug
+      - delay: 1000ms
+      
+      - switch.turn_off: water_pump
+      - delay: 1000ms
+      - switch.turn_off: smoke_fan
       
       - switch.turn_on: led_error
-      - script.execute: stop_all
       
-      # Safety delays
-      - delay: 100ms
-      - switch.turn_off: smoke_fan
-      - delay: 100ms
-      - switch.turn_off: spark_plug
-      - delay: 100ms
-      - switch.turn_off: water_pump
+      - script.execute: stop_all
 
   - id: coclea_pulse
     mode: restart
@@ -241,7 +281,6 @@ script:
     then:
       - lambda: |-
           bool is_active = id(physical_sw).state || id(web_enable).state;
-          
           if (is_active) {
             if (!id(stove_pwr_status).state) id(stove_pwr_status).turn_on();
           } else {

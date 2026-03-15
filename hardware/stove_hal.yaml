@@ -6,7 +6,16 @@ one_wire:
   - platform: gpio
     pin: 4
 
+debug:
+
+
+text_sensor:
+  - platform: debug
+    reset_reason:
+      name: "Stove Reset Reason"
+
 sensor:
+
   - platform: max6675
     name: "SMOKE_TEMP"
     id: temp_smoke
@@ -96,7 +105,7 @@ switch:
   - platform: gpio
     pin: 14
     id: led_error
-    internal: true
+    internal: false
     restore_mode: ALWAYS_OFF
 
   - platform: gpio
