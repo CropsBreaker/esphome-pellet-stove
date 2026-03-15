@@ -5,6 +5,11 @@
 inline void run_stove_control_loop() {
   static float pellet_bucket = 0.0f;
 
+  // Blocco anti-watchdog se la stufa è in lock critico
+  if (id(led_error).state) {
+    return;
+  }
+
   // 1. ANTI-CLOGGING MODE
   if (id(anticlogging_mode).state) {
     static uint32_t last_pulse_start = 0;
@@ -140,8 +145,6 @@ inline void run_stove_control_loop() {
 
   float pid_power = (id(K_p) * error) + (id(K_i) * id(integral)) + (id(K_d) * derivative);
   
-  // FIX 1: Abbassiamo il tetto massimo del PID da 1.2 a 0.65 
-  // Riduciamo l'over-feeding cronico a ventola fissa.
   pid_power = fmaxf(fminf(pid_power, 0.65f), 0.0f);
   
   // B. "Smart Bucket" Logic
@@ -152,15 +155,10 @@ inline void run_stove_control_loop() {
       pellet_bucket += pid_power * dt; 
   }
 
-  // FIX 2: Riduciamo la capienza massima del secchiello da 10.0 a 4.5
-  // Impedisce scarichi "punitivi" troppo lunghi se il PID resta saturo a lungo.
   pellet_bucket = fminf(pellet_bucket, 4.5f);
   
   // C. Actuation
   const float MIN_MOTOR_ON = 2.0f; 
-  
-  // FIX 3: Aumentiamo il tempo di riposo inderogabile.
-  // Passiamo da 1.5s a 2.5s per garantire lo smaltimento del carico precedente.
   const float MIN_REST_TIME = 2.5f; 
 
   float t_on = 0.0f;
@@ -170,7 +168,6 @@ inline void run_stove_control_loop() {
       t_on = fminf(pellet_bucket, max_run_this_cycle);
       pellet_bucket -= t_on;
   } else if (T_smoke < 130.0f) {
-      // Ricalibrato per essere meno aggressivo in fase di mantenimento basso
       t_on = dt * 0.35f; 
   }
 

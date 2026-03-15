@@ -155,12 +155,15 @@ script:
     then:
       - script.stop: coclea_pulse
       - switch.turn_off: coclea
+      - delay: 100ms
       - switch.turn_off: spark_plug
+      - delay: 100ms
       - switch.turn_off: water_pump
       
-      - globals.set:
-          id: status_message
-          value: '"TURNING_OFF"'
+      - lambda: |-
+          if (!id(led_error).state) {
+            id(status_message) = "TURNING_OFF";
+          }
       - delay: 600s
       - switch.turn_off: smoke_fan
 
@@ -207,12 +210,16 @@ script:
           tag: "SAFETY"
           level: ERROR
           format: "!!! CRITICAL EXIT TRIGGERED !!!"
-      - script.execute: stop_all
-      - switch.turn_on: led_error
       
-      # Safety
+      - switch.turn_on: led_error
+      - script.execute: stop_all
+      
+      # Safety delays
+      - delay: 100ms
       - switch.turn_off: smoke_fan
+      - delay: 100ms
       - switch.turn_off: spark_plug
+      - delay: 100ms
       - switch.turn_off: water_pump
 
   - id: coclea_pulse
